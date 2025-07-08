@@ -14,6 +14,9 @@ playerSprite:setCollideRect(4, 4, 56, 40)
 playerSprite:moveTo(playerStartX, playerStartY)
 playerSprite:add()
 
+local lastScore = 0
+local highScore = playdate.datastore.read("highscore") or 0
+
 local score = 0
 
 -- Game state management
@@ -31,8 +34,15 @@ function pd.update()
     gfx.sprite.update()
 
     if gameState == "stopped" then
+        if lastScore > highScore then
+            highScore = lastScore
+            playdate.datastore.write(highScore, "highscore")
+            gfx.drawTextAligned("New High Score!", 200, 80, kTextAlignment.center)
+        end
         gfx.drawTextAligned("Press A to start", 200, 40, kTextAlignment.center)
-        gfx.drawText("Score: " .. score, 200, 80)
+        gfx.drawText("Last Score: " .. lastScore, 200, 120)
+        gfx.drawText("High Score: " .. highScore, 200, 160)
+
         if pd.buttonJustPressed(pd.kButtonA) then
             gameState = "active"
             score = 0
@@ -54,6 +64,7 @@ function pd.update()
         end
 
         if playerSprite.y > 270 or playerSprite.y < -30 or #playerSprite:overlappingSprites() > 0 then
+            lastScore = score
             gameState = "stopped"
         end
 
