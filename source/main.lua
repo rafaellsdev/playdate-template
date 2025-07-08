@@ -1,73 +1,55 @@
--- Below is a small example program where you can move a circle
--- around with the crank. You can delete everything in this file,
--- but make sure to add back in a playdate.update function since
--- one is required for every Playdate game!
--- =============================================================
-
--- Importing libraries used for drawCircleAtPoint and crankIndicator
+-- Player related code
 import "CoreLibs/graphics"
-import "CoreLibs/ui"
+import "CoreLibs/sprites"
 
--- Localizing commonly used globals
-local pd <const> = playdate
-local gfx <const> = playdate.graphics
+local pd = playdate
+local gfx = pd.graphics
 
--- Defining player variables
-local playerSize = 10
-local playerVelocity = 3
-local playerX, playerY = 200, 120
+local playerStartX = 40
+local playerStartY = 120
+local playerSpeed = 3
+local playerImage = gfx.image.new("images/capybara")
+local playerSprite = gfx.sprite.new(playerImage)
+playerSprite:setCollideRect(4, 4, 56, 40)
+playerSprite:moveTo(playerStartX, playerStartY)
+playerSprite:add()
 
--- Drawing player image
-local playerImage = gfx.image.new(32, 32)
-gfx.pushContext(playerImage)
-    -- Draw outline
-    gfx.drawRoundRect(4, 3, 24, 26, 1)
-    -- Draw screen
-    gfx.drawRect(7, 6, 18, 12)
-    -- Draw eyes
-    gfx.drawLine(10, 12, 12, 10)
-    gfx.drawLine(12, 10, 14, 12)
-    gfx.drawLine(17, 12, 19, 10)
-    gfx.drawLine(19, 10, 21, 12)
-    -- Draw crank
-    gfx.drawRect(27, 15, 3, 9)
-    -- Draw A/B buttons
-    gfx.drawCircleInRect(16, 20, 4, 4)
-    gfx.drawCircleInRect(21, 20, 4, 4)
-    -- Draw D-Pad
-    gfx.drawRect(8, 22, 6, 2)
-    gfx.drawRect(10, 20, 2, 6)
-gfx.popContext()
+-- Game state management
+local gameState = "stopped"
 
--- Defining helper function
-local function ring(value, min, max)
-	if (min > max) then
-		min, max = max, min
-	end
-	return min + (value - min) % (max - min)
-end
+-- Obstacle related code
+local obstacleSpeed = 5
+local obstacleImage = gfx.image.new("images/rock")
+local obstacleSprite = gfx.sprite.new(obstacleImage)
+obstacleSprite:setCollideRect(0, 0, 48, 48)
+obstacleSprite:moveTo(450, 240)
+obstacleSprite:add()
 
--- playdate.update function is required in every project!
-function playdate.update()
-    -- Clear screen
-    gfx.clear()
-    -- Draw crank indicator if crank is docked
-    if pd.isCrankDocked() then
-        pd.ui.crankIndicator:draw()
-    else
-        -- Calculate velocity from crank angle 
-        local crankPosition = pd.getCrankPosition() - 90
-        local xVelocity = math.cos(math.rad(crankPosition)) * playerVelocity
-        local yVelocity = math.sin(math.rad(crankPosition)) * playerVelocity
-        -- Move player
-        playerX += xVelocity
-        playerY += yVelocity
-        -- Loop player position
-        playerX = ring(playerX, -playerSize, 400 + playerSize)
-        playerY = ring(playerY, -playerSize, 240 + playerSize)
+function pd.update()
+    gfx.sprite.update()
+
+    if gameState == "stopped" then
+        gfx.drawTextAligned("Press A to start", 200, 40, kTextAlignment.center)
+        if pd.buttonJustPressed(pd.kButtonA) then
+            gameState = "active"
+            playerSprite:moveTo(playerStartX, playerStartY)
+            obstacleSprite:moveTo(450, math.random(40, 200))
+        end
+    elseif gameState == "active" then
+        local crankPosition = pd.getCrankPosition()
+        if crankPosition <= 90 or crankPosition >= 270 then
+            playerSprite:moveBy(0, -playerSpeed)
+        else
+            playerSprite:moveBy(0, playerSpeed)
+        end
+
+        obstacleSprite:moveBy(-obstacleSpeed, 0)
+        if obstacleSprite.x < -40 then
+            obstacleSprite:moveTo(450, math.random(40, 200))
+        end
+
+        if playerSprite.y > 270 or playerSprite.y < -30 then
+            gameState = "stopped"
+        end
     end
-    -- Draw text
-    gfx.drawTextAligned("Template configured!", 200, 30, kTextAlignment.center)
-    -- Draw player
-    playerImage:drawAnchored(playerX, playerY, 0.5, 0.5)
 end
