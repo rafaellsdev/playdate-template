@@ -14,6 +14,8 @@ playerSprite:setCollideRect(4, 4, 56, 40)
 playerSprite:moveTo(playerStartX, playerStartY)
 playerSprite:add()
 
+local score = 0
+
 -- Game state management
 local gameState = "stopped"
 
@@ -32,6 +34,7 @@ function pd.update()
         gfx.drawTextAligned("Press A to start", 200, 40, kTextAlignment.center)
         if pd.buttonJustPressed(pd.kButtonA) then
             gameState = "active"
+            score = 0
             playerSprite:moveTo(playerStartX, playerStartY)
             obstacleSprite:moveTo(450, math.random(40, 200))
         end
@@ -46,6 +49,7 @@ function pd.update()
         obstacleSprite:moveBy(-obstacleSpeed, 0)
         if obstacleSprite.x < -40 then
             obstacleSprite:moveTo(450, math.random(40, 200))
+            score += 1
         end
 
         if playerSprite.y > 270 or playerSprite.y < -30 then
