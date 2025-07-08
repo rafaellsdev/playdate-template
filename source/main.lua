@@ -32,6 +32,7 @@ function pd.update()
 
     if gameState == "stopped" then
         gfx.drawTextAligned("Press A to start", 200, 40, kTextAlignment.center)
+        gfx.drawText("Score: " .. score, 200, 80)
         if pd.buttonJustPressed(pd.kButtonA) then
             gameState = "active"
             score = 0
@@ -52,8 +53,10 @@ function pd.update()
             score += 1
         end
 
-        if playerSprite.y > 270 or playerSprite.y < -30 then
+        if playerSprite.y > 270 or playerSprite.y < -30 or #playerSprite:overlappingSprites() > 0 then
             gameState = "stopped"
         end
+
+        gfx.drawText("Score: " .. score, 10, 10)
     end
 end
